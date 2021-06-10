@@ -1,0 +1,61 @@
+<%-- any content can be specified here e.g.: --%>
+<%@page import="db.User"%>
+<%@page import="web.DbListener"%>
+<%@ page pageEncoding="UTF-8" %>
+<%
+    String headerError = null;
+    if(request.getParameter("session.login")!=null){
+        String login = request.getParameter("user.login");
+        String password = request.getParameter("user.password_hash");
+        try{
+            User loginUser = User.getUser(login, password_hash);
+            if(loginUser == null){
+                headerError = "Login ou passoword incorreto(s)";
+            }else{
+                session.setAttribute("user.login", loginUser.getLogin());
+                session.setAttribute("user.name", loginUser.getName());
+                response.sendRedirect(request.getRequestURI());
+            }
+        }catch(Exception ex){
+            headerError = ex.getMessage();
+        }
+    }else if(request.getParameter("session.logout")!=null){
+        session.removeAttribute("user.login");
+        session.removeAttribute("user.name");
+        response.sendRedirect(request.getRequestURI());
+    }
+%>
+<h1>Prova P2</h1>
+<%if(DbListener.exception != null){%>
+    <div style="color: red">
+        Um erro ocorreu no passo '<%= DbListener.step %>'
+        : <%= DbListener.exception.getMessage() %>
+    </div>
+<%}%>
+<%if(headerError != null){%>
+    <div style="color: red">
+        Erro no processamento do login/logout
+        : <%= headerError %>
+    </div>
+<%}%>
+<%if(session.getAttribute("user.login") == null){%>
+    <form method="post">
+        Usuário: <input type="text" name="user.login"/>
+        Password: <input type="password" name="user.password_hash"/>
+        <input type="submit" name="session.login" value="Entrar"/>
+    </form>
+<%}else{%>
+    <% String role = (String) session.getAttribute("user.role");%>
+    <form method="post">
+        Bem vindo, <b>
+            <a href="my-profile.jsp"><%= session.getAttribute("user.name") %></a>
+        </b>
+        <input type="submit" name="session.logout" value="Sair"/>
+        | <a href="index.jsp">INÍCIO</a>
+        <%if(role.equals("ADMIN")){%>
+        | <a href="users.jsp">USUÁRIOS</a>
+        <%}%>
+        | <a href="categories.jsp">DISCIPLINAS</a>
+    </form>
+<%}%>
+<hr/>
